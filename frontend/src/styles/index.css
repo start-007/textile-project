@@ -19,6 +19,7 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
+  color:white;
 }
 
 /* App root */
