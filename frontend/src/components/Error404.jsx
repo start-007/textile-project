@@ -1,11 +1,11 @@
 import "../styles/Error404.css";
 import { Link } from "react-router-dom";
 
-export default function Error404() {
+export default function Error500() {
   return (
     <div className="error-page">
-      <h1>404</h1>
-      <p>Oops! Page not found.</p>
+      <h1>400</h1>
+      <p>Not Found</p>
       <Link to="/">Go Home</Link>
     </div>
   );
