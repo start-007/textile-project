@@ -1,0 +1,31 @@
+/* Reset and base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  min-width: 320px;    /* smallest mobile width */
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+  background: black;
+  overflow-x: hidden;   /* prevent horizontal scroll */
+}
+
+/* Centered content fallback for small screens */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* App root */
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
