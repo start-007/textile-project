@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom'; // Added react-router-dom
+import { useCartStore } from '../utils/useCartStore';
 
 // --- ATOM: The Brand Logo ---
 const NavLogo = () => (
@@ -9,33 +11,46 @@ const NavLogo = () => (
 );
 
 // --- ATOM: The Individual Link ---
-const NavLink = ({ href, label, icon, count, className = "" }) => (
-  <a 
-    href={href} 
-    className={`group flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300 ${className}`}
-  >
-    {icon && <span className="group-hover:scale-110 transition-transform">{icon}</span>}
-    <span>{label}</span>
-    {count !== undefined && (
-      <span className="flex items-center justify-center bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold border border-white/30 group-hover:bg-indigo-500 group-hover:border-indigo-400 transition-colors">
-        {count}
-      </span>
-    )}
-  </a>
-);
+// Upgraded to use react-router-dom's <Link> for instant navigation
+const NavLink = ({ href, label, icon, count, className = "", onClick }) => {
+  return (
+    <Link 
+      to={href} 
+      onClick={onClick}
+      className={`group flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300 ${className}`}
+    >
+      {icon && <span className="group-hover:scale-110 transition-transform">{icon}</span>}
+      <span>{label}</span>
+      {count !== undefined && count > 0 && (
+        <span className="flex items-center justify-center bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold border border-white/30 group-hover:bg-indigo-500 group-hover:border-indigo-400 transition-colors">
+          {count}
+        </span>
+      )}
+    </Link>
+  );
+};
 
 // --- ORCHESTRATOR: The Navbar ---
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Hook into Zustand to calculate total items
+  const cart = useCartStore((state) => state.cart);
+  const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Helper to close mobile menu on click
+  const handleNavClick = () => setIsOpen(false);
+
   // Centralized Navigation Data
   const navItems = [
-    { label: 'Store', href: '/store' },
-    { label: 'About', href: '/about' },
+    { label: 'Home', href: '/', onClick: handleNavClick },
+    { label: 'Store', href: '/store/all', onClick: handleNavClick },
+    { label: 'About', href: '/about', onClick: handleNavClick },
     { 
       label: 'Cart', 
-      href: '/cart', 
-      count: 0, 
+      href: '/cart', // Now points to the /cart route!
+      onClick: handleNavClick, 
+      count: totalItems, 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
@@ -45,7 +60,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-50 bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl md:rounded-full px-6 py-3 transition-all duration-300">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-40 bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl md:rounded-full px-6 py-3 transition-all duration-300">
       <div className="flex items-center justify-between">
         <NavLogo />
 

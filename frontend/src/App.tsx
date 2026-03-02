@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Homepage from "./components/Homepage";
 import Store from "./components/Store";
+import Product from "./components/Product";
+import CartPage from "./components/Cart";
 const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -10,9 +12,10 @@ const App: React.FC = () => {
 
         <Route element={<Layout />}>
           <Route path="/" element={<Homepage />} />
-          <Route path="/men" element={<Store />} />
-          <Route path="/women" element={<Store />} />
-          <Route path="/store" element={<Store />} />
+          <Route path="/store/:gender" element={<Store />} />
+          <Route path="/store/product/:id" element={<Product />} />
+          <Route path="/cart" element={<CartPage />} />
+
 
 
         </Route>

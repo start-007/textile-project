@@ -5,18 +5,24 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 // Import routes
-const getClothItemRoutes = require('./routes/get-routes/getClothItem');
-const reviewRoutes = require('./routes/get-routes/getReviews');
-const postClothItemRoutes = require('./routes/post-routes/postClothItem');
+const getClothItemRoutes = require('./routes/cloth-item/getClothItem');
+const postClothItemRoutes = require('./routes/cloth-item/postClothItem');
+const getStoreRoutes = require('./routes/store/getStore');
+const getReviewRoutes = require('./routes/review/getReviews');
+const putReviewRoutes = require('./routes/review/putReview');
+
+const { API_ROUTES } = require('./routes/utils/constants');
+
 dotenv.config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/api/get/clothing", getClothItemRoutes); // retrive clothing data..
-app.use("/api/post/clothing", postClothItemRoutes); // save clothing data..
-app.use("/api/get/reviews", reviewRoutes); // retrive reviews data..
+
+app.use(API_ROUTES.CLOTH_ITEM, getClothItemRoutes, postClothItemRoutes);
+app.use(API_ROUTES.REVIEWS, getReviewRoutes, putReviewRoutes);
+app.use(API_ROUTES.STORE, getStoreRoutes);
 
 mongoose.connect(process.env.MONGO_URL)
 .then(console.log("DB Connected"))
