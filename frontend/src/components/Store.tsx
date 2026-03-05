@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCartStore } from "../utils/useCartStore.js";
-import { URLS,API_BASE_URL } from '../utils/constants.js';
+import { URLS, API_BASE_URL } from '../utils/constants.js';
+
 // --- Types ---
 interface ProductOption {
     mp_sizes_to_stock: Record<string, number>;
@@ -24,54 +25,337 @@ interface Product {
     reviewCount: number;
 }
 
-// --- Helper Component: Star Rating (Adapted for Dark Mode) ---
-const StarRating = ({ rating }: { rating: number }) => {
-    return (
-        <div className="flex items-center text-amber-400 text-sm">
-            {[1, 2, 3, 4, 5].map((star) => (
-                <svg
-                    key={star}
-                    className={`w-4 h-4 ${star <= Math.round(rating) ? 'fill-current' : 'text-gray-600 fill-current'}`}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                >
-                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                </svg>
-            ))}
-        </div>
-    );
-};
+interface ProductCardProps {
+    product: Product;
+    navigate: ReturnType<typeof useNavigate>;
+    handleAddToCart: (e: React.MouseEvent, product: Product) => void;
+}
 
-// --- Animation Variants ---
+// --- Animation Variants (Premium, Fluid, No Bounce) ---
+const easeOutQuart = [0.25, 1, 0.5, 1];
+
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
-        transition: { staggerChildren: 0.1 },
+        transition: { staggerChildren: 0.1, delayChildren: 0.2 }, 
     },
 };
 
 const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
         opacity: 1,
         y: 0,
-        transition: { type: 'spring', stiffness: 300, damping: 24 }
+        transition: { duration: 0.8, ease: easeOutQuart }
     },
 };
 
-// --- Sub-components (Dark Mode Skeleton) ---
+const headerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+        opacity: 1, 
+        y: 0, 
+        transition: { duration: 0.8, ease: easeOutQuart } 
+    }
+};
+const mockProducts: Product[] = [
+    {
+        _id: "prod_101",
+        title: "AeroSwift Motion Windbreaker",
+        product_type: "Jacket",
+        gender: "mens",
+        rating: 4.9,
+        reviewCount: 142,
+        product_reviews_id: "rev_101",
+        product_options: {
+            "Onyx Black": {
+                mp_sizes_to_stock: { "S": 10, "M": 15, "L": 5, "XL": 2 },
+                price: 128,
+                priceAdjustment: 0,
+                tax: 10,
+                // High-quality vertical placeholder image
+                images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&h=750&q=80"],
+                // Standard W3C sample video for testing playback
+                videos: ["https://www.w3schools.com/html/mov_bbb.mp4"] 
+            }
+        }
+    },
+    {
+        _id: "prod_102",
+        title: "Pace Breaker Training Shorts",
+        product_type: "Bottoms",
+        gender: "mens",
+        rating: 4.6,
+        reviewCount: 89,
+        product_reviews_id: "rev_102",
+        product_options: {
+            "Navy Blue": {
+                mp_sizes_to_stock: { "M": 20, "L": 20 },
+                price: 68,
+                priceAdjustment: 0,
+                tax: 5,
+                images: ["https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: [] // Empty video array to test fallback
+            },
+            "Olive Green": {
+                mp_sizes_to_stock: { "S": 5, "M": 10 },
+                price: 68,
+                priceAdjustment: 0,
+                tax: 5,
+                images: ["https://images.unsplash.com/photo-1533682805518-48d1f5e8cd3e?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: []
+            }
+        }
+    },
+    {
+        _id: "prod_104",
+        title: "Pace Breaker Training Shorts",
+        product_type: "Bottoms",
+        gender: "mens",
+        rating: 4.6,
+        reviewCount: 89,
+        product_reviews_id: "rev_102",
+        product_options: {
+            "Navy Blue": {
+                mp_sizes_to_stock: { "M": 20, "L": 20 },
+                price: 68,
+                priceAdjustment: 0,
+                tax: 5,
+                images: ["https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: [] // Empty video array to test fallback
+            },
+            "Olive Green": {
+                mp_sizes_to_stock: { "S": 5, "M": 10 },
+                price: 68,
+                priceAdjustment: 0,
+                tax: 5,
+                images: ["https://images.unsplash.com/photo-1533682805518-48d1f5e8cd3e?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: []
+            }
+        }
+    },
+    
+    
+    
+
+    {
+        _id: "prod_103",
+        title: "Everyday Core Hoodie",
+        product_type: "Fleece",
+        gender: "mens",
+        rating: 0, // Tests the "New" logic
+        reviewCount: 0,
+        product_reviews_id: "rev_103",
+        product_options: {
+            "Heather Grey": {
+                mp_sizes_to_stock: { "S": 8, "M": 12, "L": 12 },
+                price: 88,
+                priceAdjustment: -10, // Tests price adjustment math
+                tax: 7,
+                images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: ["https://www.w3schools.com/html/mov_bbb.mp4"]
+            }
+        }
+    },
+    {
+        _id: "prod_107",
+        title: "Everyday Core Hoodie",
+        product_type: "Fleece",
+        gender: "mens",
+        rating: 0, // Tests the "New" logic
+        reviewCount: 0,
+        product_reviews_id: "rev_103",
+        product_options: {
+            "Heather Grey": {
+                mp_sizes_to_stock: { "S": 8, "M": 12, "L": 12 },
+                price: 88,
+                priceAdjustment: -10, // Tests price adjustment math
+                tax: 7,
+                images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: ["https://www.w3schools.com/html/mov_bbb.mp4"]
+            }
+        }
+    },
+    {
+        _id: "prod_108",
+        title: "Everyday Core Hoodie",
+        product_type: "Fleece",
+        gender: "mens",
+        rating: 0, // Tests the "New" logic
+        reviewCount: 0,
+        product_reviews_id: "rev_103",
+        product_options: {
+            "Heather Grey": {
+                mp_sizes_to_stock: { "S": 8, "M": 12, "L": 12 },
+                price: 88,
+                priceAdjustment: -10, // Tests price adjustment math
+                tax: 7,
+                images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&h=750&q=80"],
+                videos: ["https://www.w3schools.com/html/mov_bbb.mp4"]
+            }
+        }
+    }
+
+];
+
+// --- Sub-components ---
 const SkeletonCard = () => (
-    <div className="p-5 border border-gray-700/50 bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-sm animate-pulse flex flex-col h-[380px]">
-        <div className="bg-gray-700/50 h-48 w-full rounded-xl mb-4"></div>
-        <div className="bg-gray-700/50 h-4 w-1/3 rounded mb-3"></div>
-        <div className="bg-gray-700/50 h-5 w-full rounded mb-2"></div>
-        <div className="bg-gray-700/50 h-5 w-2/3 rounded mb-4"></div>
-        <div className="bg-gray-700/50 h-8 w-1/4 rounded mt-auto"></div>
+    <div className="flex flex-col w-full animate-pulse">
+        {/* Changed from aspect-[4/5] to aspect-square to reduce height */}
+        <div className="w-full aspect-square bg-gray-200 rounded-3xl mb-4"></div>
+        {/* Text Placeholders */}
+        <div className="flex justify-between items-start mb-2">
+            <div className="h-5 bg-gray-200 w-2/3 rounded-md"></div>
+            <div className="h-5 bg-gray-200 w-1/4 rounded-md"></div>
+        </div>
+        <div className="h-4 bg-gray-200 w-1/3 rounded-md mb-4"></div>
+        {/* Button Placeholder */}
+        <div className="h-10 bg-gray-200 w-full rounded-xl mt-auto"></div>
     </div>
 );
 
-// --- Main Store Component ---
+// Individual Product Card Component to handle Video Hover Logic
+const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddToCart }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null); // To track our 500ms timer
+    const [isHovered, setIsHovered] = useState(false); 
+    
+    const optionKeys = Object.keys(product.product_options || {});
+    const firstOptionKey = optionKeys[0];
+    const defaultOption = firstOptionKey ? product.product_options[firstOptionKey] : null;
+    
+    const displayImage = defaultOption?.images?.[0] || 'https://via.placeholder.com/500?text=No+Image';
+    const displayVideo = defaultOption?.videos?.[0]; 
+    const displayPrice = (defaultOption?.price || 0) + (defaultOption?.priceAdjustment || 0);
+    const colorCount = optionKeys.length;
+    
+    const rating = product.rating || 0;
+    const reviewCount = product.reviewCount || 0;
+
+    // Cleanup timer if the component unmounts
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
+
+    const handleInteractionStart = () => {
+        // 1. Clear any existing timer just to be safe
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+        // 2. Start a 500ms countdown before showing/playing the video
+        timeoutRef.current = setTimeout(() => {
+            setIsHovered(true);
+            if (videoRef.current && displayVideo) {
+                videoRef.current.play().catch(error => console.log("Video auto-play prevented:", error));
+            }
+        }, 250);
+    };
+
+    const handleInteractionEnd = () => {
+        // 1. If they scroll or move away BEFORE 500ms, cancel the timer!
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        
+        // 2. Reset the video state
+        setIsHovered(false);
+        if (videoRef.current && displayVideo) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0; 
+        }
+    };
+
+    return (
+        <motion.div
+            variants={cardVariants}
+            onClick={() => navigate(`/store/product/${product._id}`)}
+            onMouseEnter={handleInteractionStart}
+            onMouseLeave={handleInteractionEnd}
+            onTouchStart={handleInteractionStart} 
+            onTouchEnd={handleInteractionEnd}     
+            onTouchCancel={handleInteractionEnd}  
+            className="group flex flex-col cursor-pointer"
+        >
+            {/* Image / Video Container */}
+            <div className="relative w-full aspect-square mb-4 overflow-hidden rounded-3xl bg-gray-100">
+                {/* Base Image */}
+                <img
+                    src={displayImage}
+                    alt={product.title}
+                    loading="lazy"
+                    className={`absolute inset-0 object-cover h-full w-full transition-transform duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105 ${displayVideo && isHovered ? 'opacity-0' : 'opacity-100'}`}
+                />
+                
+                {/* Hover Video Overlay */}
+                {displayVideo && (
+                    <video
+                        ref={videoRef}
+                        src={displayVideo}
+                        muted
+                        playsInline
+                        loop
+                        className={`absolute inset-0 object-cover h-full w-full transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                )}
+                
+                {/* Top Left Pill Tag */}
+                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-black/5">
+                    <span className="text-[11px] font-semibold text-black uppercase tracking-widest">
+                        {product.product_type}
+                    </span>
+                </div>
+
+                {/* Subtle Hover Overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 pointer-events-none"></div>
+            </div>
+
+            {/* Product Info */}
+            <div className="flex flex-col px-1">
+                <div className="flex justify-between items-start gap-4">
+                    <h3 className="text-base font-semibold text-gray-900 line-clamp-1 group-hover:text-gray-600 transition-colors duration-300">
+                        {product.title}
+                    </h3>
+                    <span className="text-base font-medium text-black shrink-0">
+                        ${Math.floor(displayPrice)}
+                    </span>
+                </div>
+
+                <div className="flex justify-between items-center mt-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-700">
+                            {rating > 0 ? rating.toFixed(1) : 'New'}
+                        </span>
+                        <span className="text-sm text-gray-400 font-normal">
+                            ({reviewCount})
+                        </span>
+                    </div>
+
+                    {colorCount > 1 && (
+                        <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-md">
+                            {colorCount} Colors
+                        </span>
+                    )}
+                </div>
+
+                <button
+                    onClick={(e) => handleAddToCart(e, product)}
+                    aria-label="Add to Cart"
+                    className="mt-4 w-full py-2.5 rounded-xl border transition-all duration-300 flex justify-center items-center gap-2 group/btn 
+                               bg-black text-white border-black 
+                               lg:bg-white lg:text-black lg:border-gray-200 lg:hover:bg-black lg:hover:text-white lg:hover:border-black"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Add to Cart
+                </button>
+            </div>
+        </motion.div>
+    );
+};
 const Store: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -83,16 +367,16 @@ const Store: React.FC = () => {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            setIsLoading(true); // Keep the snappy loading fix!
+            setIsLoading(true); 
             
             try {
                 const response = await fetch(`${API_BASE_URL}/${URLS.STORE}/${gender}`);
                 const data = await response.json();
                 
                 setTimeout(() => {
-                    setProducts(data);
+                    setProducts(mockProducts);
                     setIsLoading(false);
-                }, 500);
+                }, 600);
             } catch (error) {
                 console.error("Failed to fetch products:", error);
                 setIsLoading(false);
@@ -108,107 +392,53 @@ const Store: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 pt-30 pb-10 px-4 sm:px-6 lg:px-8 text-gray-100">
+        <div className="min-h-screen bg-[#FAFAFA] pt-36 pb-24 px-6 md:px-12 lg:px-24 font-sans text-black">
             <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-end mb-8">
-                    <h1 className="text-4xl font-extrabold text-white tracking-tight capitalize">
-                        {gender ? `${gender} Products` : 'Featured Products'}
+                
+                {/* Header Section */}
+                <motion.div 
+                    variants={headerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6"
+                >
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-black capitalize">
+                        {gender ? `${gender}'s Collection` : 'Featured Apparel'}
                     </h1>
-                </div>
+                    <p className="text-gray-500 font-light text-lg md:max-w-xs">
+                        Engineered for performance, designed for everyday movement.
+                    </p>
+                </motion.div>
 
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[...Array(8)].map((_, index) => (
+                    // Skeleton Grid
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+                        {[...Array(6)].map((_, index) => (
                             <SkeletonCard key={index} />
                         ))}
                     </div>
                 ) : (
+                    // Actual Product Grid
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
                     >
-                        {products.map((product) => {
-                            const optionKeys = Object.keys(product.product_options || {});
-                            const firstOptionKey = optionKeys[0];
-                            const defaultOption = firstOptionKey ? product.product_options[firstOptionKey] : null;
-                            
-                            // const displayImage = defaultOption?.images?.[0] || 'https://via.placeholder.com/500?text=No+Image';
-                            const displayImage ="https://media.gettyimages.com/id/154960461/photo/red-sweat-shirt-on-white-background.jpg?s=612x612&w=gi&k=20&c=S3A3cS6lIf-frbPgvMKkwRUIj59FTf1GW97kA9myxK0="
-                            const displayPrice = defaultOption?.price || 0;
-                            const colorCount = optionKeys.length;
+                        {products.length === 0 ? (
+                            <h2 className="text-2xl text-gray-400 font-light col-span-full text-center py-20">
+                                No products found.
+                            </h2>
+                        ) : null}
 
-                            return (
-                                <motion.div
-                                    key={product._id}
-                                    variants={cardVariants}
-                                    whileHover={{ y: -8, scale: 1.02 }}
-                                    onClick={() => navigate(`/store/product/${product._id}`)}
-                                    className="bg-gray-800/80 backdrop-blur-sm p-5 rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-black/50 transition-all duration-300 border border-gray-700/50 flex flex-col cursor-pointer group"
-                                >
-                                    {/* Image Container */}
-                                    <div className="relative h-48 mb-4 overflow-hidden rounded-xl bg-gray-900/50 flex items-center justify-center">
-                                        <motion.img
-                                            whileHover={{ scale: 1.1 }}
-                                            transition={{ duration: 0.3 }}
-                                            src={displayImage}
-                                            alt={product.title}
-                                            className="object-cover h-full w-full opacity-90 group-hover:opacity-100 transition-opacity"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col flex-grow">
-                                        <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
-                                            {product.product_type}
-                                        </span>
-                                        <h3 className="text-sm font-medium text-gray-200 line-clamp-2 mb-2">
-                                            {product.title}
-                                        </h3>
-
-                                        {/* Ratings Row (Amazon Style, Dark Mode Colors) */}
-                                        <div className="flex items-center mb-2 space-x-2">
-                                            <StarRating rating={product.rating || 0} />
-                                            <span className="text-xs text-blue-400 hover:text-white transition-colors">
-                                                {product.reviewCount || 0}
-                                            </span>
-                                        </div>
-
-                                        {/* Bottom Row: Price, Colors & Add to Cart */}
-                                        <div className="mt-auto flex items-end justify-between">
-                                            <div className="flex flex-col">
-                                                {/* Formatted Price */}
-                                                <div className="flex items-start text-white">
-                                                    <span className="text-xs font-semibold mt-1">$</span>
-                                                    <span className="text-2xl font-bold">{Math.floor(displayPrice)}</span>
-                                                    <span className="text-xs font-semibold mt-1">
-                                                        {(displayPrice % 1).toFixed(2).substring(1)}
-                                                    </span>
-                                                </div>
-                                                
-                                                {/* Color Indicator */}
-                                                {colorCount > 1 && (
-                                                    <span className="text-[11px] text-gray-400 mt-1">
-                                                        + {colorCount} colors available
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Original Hover Cart Button */}
-                                            <button
-                                                onClick={(e) => handleAddToCart(e, product)}
-                                                className="bg-blue-600 text-white p-2 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 hover:bg-blue-500 shadow-lg shadow-blue-900/20 z-10"
-                                                aria-label="Add to Cart"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
+                        {products.map((product) => (
+                            <ProductCard 
+                                key={product._id} 
+                                product={product} 
+                                navigate={navigate} 
+                                handleAddToCart={handleAddToCart} 
+                            />
+                        ))}
                     </motion.div>
                 )}
             </div>

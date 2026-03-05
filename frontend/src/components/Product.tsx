@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ProductReviews from './ProductReviews';
 import { URLS, API_BASE_URL } from '../utils/constants.js';
 
-// --- Types based on new JSON structure ---
+// --- Types ---
 interface ProductOption {
     mp_sizes_to_stock: Record<string, number>;
     price: number;
@@ -34,64 +34,110 @@ interface ProductDetails {
     product_image: string[];
     product_video: string[];
     __v?: number;
-    rating?: number; // Kept for UI purposes
-    reviewsCount?: number; // Kept for UI purposes
+    rating?: number;
+    reviewsCount?: number;
 }
 
-// --- Mock Fetch Data (Updated) ---
-const mockProduct: ProductDetails = {
-    "_id": "69a4da0a9bdff5b577a0b0a4",
-    "title": "Hoodie",
-    "title_image": "https://s3.fake.com/title-6c425b93-be42-4597-afab-3e1b07cd4d27.jpg",
-    "product_type": "Hoodie",
-    "mp_des_title_to_description": {
-        "Material": "100% Cotton",
-        "Care": "Hand Wash",
-        "Fit": "Regular"
-    },
-    "gender": "female",
-    "product_options": {
-        "Red": {
-            "mp_sizes_to_stock": { "XL": 0, "L": 33, "S": 19, "M": 2, "XS": 25 },
-            "price": 50,
-            "priceAdjustment": 50,
-            "tax": 12,
-            "images": ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&q=80"], // Used unsplash for visual testing
-            "videos": []
-        },
-        "Black": {
-            "mp_sizes_to_stock": { "XL": 0, "M": 12, "S": 45, "XS": 48 },
-            "price": 37,
-            "priceAdjustment": 37,
-            "tax": 10,
-            "images": [
-                "https://images.unsplash.com/photo-1509319117193-57bab727e09d?w=800&q=80",
-                "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800&q=80"
-            ],
-            "videos": []
-        }
-    },
-    "mp_delivery_type_to_fee": {
-        "standard": { "base_fee": 70, "price_per_km": 3, "min_km": 0, "max_km": 10 },
-        "express": { "base_fee": 71, "price_per_km": 6, "min_km": 0, "max_km": 20 }
-    },
-    "product_reviews_id": "69a4db23a83f011e7ccac4cd",
-    "product_image": ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&q=80"],
-    "product_video": [
-        "https://s3.fake.com/main-0e35fdda-32bb-4f06-a980-0384ad49e5c8.mp4",
-        "https://s3.fake.com/main-39ad1421-e697-4763-98d7-b473112f0f63.mp4"
-    ],
-    "__v": 0,
-    "rating": 4.5,
-    "reviewsCount": 128
-};
+// --- Animation Variants (Premium, Fluid, No Bounce) ---
+const easeOutQuart = [0.25, 1, 0.5, 1];
 
-// --- Animation Variants ---
 const pageVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+        opacity: 1, 
+        y: 0, 
+        transition: { duration: 0.8, ease: easeOutQuart, staggerChildren: 0.1 } 
+    }
 };
 
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+        opacity: 1, 
+        y: 0, 
+        transition: { duration: 0.8, ease: easeOutQuart } 
+    }
+};
+const mock_data: Product = {
+  _id: "prod_8fa92b3c4d5e",
+  title: "AeroShell Anorak",
+  title_image:
+    "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800",
+  product_type: "Outerwear",
+  mp_des_title_to_description: {
+    Material: "Triple-layer waterproof breathable membrane",
+    Fit: "Articulated, relaxed fit designed for modular layering",
+    Care: "Machine wash cold, lay flat to dry",
+    Features:
+      "Seam-sealed interior, waterproof aquaguard zippers, hidden utility pockets",
+  },
+  gender: "Men",
+  product_options: {
+    "Obsidian Black": {
+      mp_sizes_to_stock: {
+        XS: 5,
+        S: 12,
+        M: 0,
+        L: 24,
+        XL: 8,
+      },
+      price: 245.0,
+      priceAdjustment: 0,
+      tax: 18.5,
+      images: [
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1520975954732-57dd22299614?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1550614000-4b95dd245dc4?auto=format&fit=crop&q=80&w=800",
+      ],
+      videos: [],
+    },
+    "Glacier White": {
+      mp_sizes_to_stock: {
+        XS: 2,
+        S: 8,
+        M: 15,
+        L: 10,
+        XL: 0,
+      },
+      price: 245.0,
+      priceAdjustment: 15.0,
+      tax: 19.5,
+      images: [
+        "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=800",
+      ],
+      videos: [],
+    },
+  },
+  mp_delivery_type_to_fee: {
+    standard: {
+      base_fee: 0,
+      price_per_km: 0,
+      min_km: 0,
+      max_km: 9999,
+    },
+    express: {
+      base_fee: 15,
+      price_per_km: 0.5,
+      min_km: 0,
+      max_km: 500,
+    },
+    "next-day": {
+      base_fee: 25,
+      price_per_km: 1.2,
+      min_km: 0,
+      max_km: 100,
+    },
+  },
+  product_reviews_id: "rev_92b3c4d5e8fa",
+  product_image: [
+    "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800",
+  ],
+  product_video: [],
+  __v: 1,
+  rating: 4.8,
+  reviewsCount: 342,
+};
 // --- Main Product Component ---
 const Product: React.FC = () => {
     const [product, setProduct] = useState<ProductDetails | null>(null);
@@ -112,15 +158,12 @@ const Product: React.FC = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/${URLS.CLOTH_ITEM}/${productId}`
-                );
+                // const response = await fetch(`${API_BASE_URL}/${URLS.CLOTH_ITEM}/${productId}`);
+                const data =mock_data
 
-                const data = await response.json();
-
-                // Simulate loading delay
+                // Simulate loading delay for premium feel
                 setTimeout(() => {
-                    setProduct(data);
+                    setProduct(mock_data);
 
                     if (data?.product_options) {
                         const firstOptionKey = Object.keys(data.product_options)[0];
@@ -128,23 +171,17 @@ const Product: React.FC = () => {
                         if (firstOptionKey) {
                             setSelectedOptionKey(firstOptionKey);
 
-                            const sizesToStock =
-                                data.product_options[firstOptionKey].mp_sizes_to_stock;
-
+                            const sizesToStock = data.product_options[firstOptionKey].mp_sizes_to_stock;
                             if (sizesToStock) {
                                 const firstSize = Object.keys(sizesToStock).find(
                                     size => sizesToStock[size] > 0
                                 );
-
-                                if (firstSize) {
-                                    setSelectedSize(firstSize);
-                                }
+                                if (firstSize) setSelectedSize(firstSize);
                             }
                         }
                     }
-
                     setIsLoading(false);
-                }, 1000);
+                }, 800);
 
             } catch (err) {
                 console.error("Error fetching product details:", err);
@@ -154,8 +191,6 @@ const Product: React.FC = () => {
 
         fetchProduct();
     }, [productId]);
-
-
 
     // Derived state
     const currentOption = product && selectedOptionKey ? product.product_options[selectedOptionKey] : null;
@@ -168,12 +203,13 @@ const Product: React.FC = () => {
         : product?.product_image || [product?.title_image || ""];
     const mainImage = currentGallery[activeImageIndex] || currentGallery[0];
 
+    // Refined Monochromatic Star Rating
     const renderStars = (rating: number = 5) => {
         return (
-            <div className="flex text-yellow-400 text-sm">
+            <div className="flex text-black text-sm gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${i < Math.floor(rating) ? 'fill-current' : 'text-gray-600'}`} viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current' : 'text-gray-300 fill-current'}`} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                     </svg>
                 ))}
             </div>
@@ -181,126 +217,146 @@ const Product: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 pt-30 pb-10 px-4 sm:px-6 lg:px-8 text-gray-100 font-sans">
+        <div className="min-h-screen bg-[#FAFAFA] pt-40 pb-24 px-6 md:px-12 lg:px-24 font-sans text-black">
             <div className="max-w-7xl mx-auto">
-                <button className="flex items-center text-blue-400 hover:text-blue-300 transition-colors mb-8 group" onClick={() => navigate(-1)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                
+                {/* Minimalist Back Button */}
+                {/* <button 
+                    className="flex items-center text-gray-500 hover:text-black transition-colors mb-10 group text-sm font-medium tracking-wide" 
+                    onClick={() => navigate(-1)}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     Back to Store
-                </button>
+                </button> */}
 
                 {isLoading || !product ? (
-                    <div className="animate-pulse flex flex-col md:flex-row gap-8">
-                        <div className="w-full md:w-1/2 bg-gray-800/50 rounded-2xl h-[500px]"></div>
-                        <div className="w-full md:w-1/2 flex flex-col gap-4">
-                            <div className="bg-gray-700/50 h-10 w-full rounded"></div>
-                            <div className="bg-gray-800/50 h-64 w-full rounded-2xl mt-6"></div>
+                    // Light Theme Skeleton Loader
+                    <div className="animate-pulse flex flex-col lg:flex-row gap-12">
+                        <div className="w-full lg:w-5/12 bg-gray-200 rounded-3xl h-[500px]"></div>
+                        <div className="w-full lg:w-4/12 flex flex-col gap-5">
+                            <div className="bg-gray-200 h-6 w-1/3 rounded-full"></div>
+                            <div className="bg-gray-200 h-12 w-full rounded-lg"></div>
+                            <div className="bg-gray-200 h-6 w-1/4 rounded-full mt-4"></div>
+                            <div className="bg-gray-200 h-[1px] w-full my-4"></div>
+                            <div className="bg-gray-200 h-32 w-full rounded-xl"></div>
                         </div>
+                        <div className="w-full lg:w-3/12 bg-gray-200 rounded-3xl h-[400px]"></div>
                     </div>
                 ) : (
                     <motion.div
                         variants={pageVariants}
                         initial="hidden"
                         animate="visible"
-                        className="flex flex-col lg:flex-row gap-10"
+                        className="flex flex-col lg:flex-row gap-12 lg:gap-16"
                     >
-                        {/* Left Column: Image Gallery */}
-                        <div className="w-full lg:w-5/12 flex flex-col-reverse sm:flex-row gap-4">
+                        {/* Left Column: Premium Image Gallery */}
+                        <motion.div variants={itemVariants} className="w-full lg:w-5/12 flex flex-col-reverse sm:flex-row gap-4">
+                            {/* Thumbnails */}
                             <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-20 shrink-0 pb-2 sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {currentGallery.map((img, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => setActiveImageIndex(idx)}
-                                        className={`relative rounded-xl overflow-hidden border-2 transition-all shrink-0 w-16 h-16 sm:w-full sm:h-20 ${activeImageIndex === idx
-                                            ? 'border-blue-500 ring-2 ring-blue-500/50 opacity-100'
-                                            : 'border-transparent hover:border-gray-500 opacity-60 hover:opacity-100'
+                                        className={`relative rounded-xl overflow-hidden transition-all duration-300 shrink-0 w-16 h-16 sm:w-full sm:h-20 border
+                                            ${activeImageIndex === idx
+                                                ? 'border-black opacity-100'
+                                                : 'border-transparent opacity-50 hover:opacity-100 hover:border-gray-300'
                                             }`}
                                     >
-                                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="object-cover w-full h-full" />
+                                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="object-cover w-full h-full bg-gray-100" />
                                     </button>
                                 ))}
                             </div>
 
-                            <div className="bg-gray-800/80 backdrop-blur-sm rounded-3xl p-4 border border-gray-700/50 shadow-2xl flex items-center justify-center overflow-hidden h-[400px] sm:h-[500px] flex-1">
+                            {/* Main Image */}
+                            <div className="bg-gray-100 rounded-3xl overflow-hidden h-[400px] sm:h-[600px] flex-1 relative">
                                 <AnimatePresence mode="wait">
                                     <motion.img
                                         key={mainImage}
                                         initial={{ opacity: 0, scale: 0.98 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.2 }}
+                                        transition={{ duration: 0.4, ease: easeOutQuart }}
                                         src={mainImage}
                                         alt={product.title}
-                                        className="object-contain w-full h-full rounded-2xl"
+                                        className="object-cover w-full h-full"
                                     />
                                 </AnimatePresence>
+                                {/* Floating Product Type Pill */}
+                                <div className="absolute top-5 left-5 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full shadow-sm border border-black/5">
+                                    <span className="text-[11px] font-semibold text-black uppercase tracking-widest">
+                                        {product.product_type}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Middle Column: Amazon-Style Details */}
-                        <div className="w-full lg:w-4/12 flex flex-col pr-0 lg:pr-4">
-                            <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-2">
-                                {product.gender} • {product.product_type}
+                        {/* Middle Column: Editorial Product Details */}
+                        <motion.div variants={itemVariants} className="w-full lg:w-4/12 flex flex-col pr-0 lg:pr-4">
+                            <span className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                                {product.gender}
                             </span>
-                            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+                            <h1 className="text-4xl md:text-5xl font-medium text-black tracking-tight mb-4 leading-tight">
                                 {product.title}
                             </h1>
 
-                            <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => reviewsRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+                            <div className="flex items-center gap-3 mb-8 cursor-pointer" onClick={() => reviewsRef.current?.scrollIntoView({ behavior: 'smooth' })}>
                                 {renderStars(product.rating)}
-                                <span className="text-sm text-blue-400 hover:text-blue-300 transition-colors underline decoration-blue-400/30">
-                                    {product.reviewsCount} ratings
+                                <span className="text-sm text-gray-500 hover:text-black transition-colors">
+                                    {product.reviewsCount} reviews
                                 </span>
                             </div>
 
-                            <hr className="border-gray-700/50 mb-6" />
+                            <hr className="border-gray-200 mb-8" />
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-5 mb-8">
                                 {Object.entries(product.mp_des_title_to_description).map(([key, value]) => (
-                                    <div key={key} className="flex gap-4">
-                                        <span className="text-sm font-semibold text-gray-400 w-24 shrink-0">{key}</span>
-                                        <span className="text-gray-200 text-sm font-medium">{value}</span>
+                                    <div key={key} className="flex gap-6">
+                                        <span className="text-sm font-semibold text-gray-400 w-24 shrink-0 uppercase tracking-wide">{key}</span>
+                                        <span className="text-black text-sm font-normal leading-relaxed">{value}</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <hr className="border-gray-700/50 mb-6" />
+                            <hr className="border-gray-200 mb-8" />
 
-                            {/* Delivery Information Block */}
+                            {/* Delivery Options */}
                             <div>
-                                <h3 className="text-lg font-bold text-white mb-3">Delivery Options</h3>
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Delivery Options</h3>
                                 <div className="space-y-3">
                                     {Object.entries(product.mp_delivery_type_to_fee).map(([type, fee]) => (
-                                        <div key={type} className="flex justify-between items-center text-sm p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                                            <span className="capitalize text-gray-300 font-medium">{type} Delivery</span>
-                                            <span className="text-white font-bold">${fee.base_fee.toFixed(2)}</span>
+                                        <div key={type} className="flex justify-between items-center text-sm p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                                            <span className="capitalize text-black font-medium">{type} Delivery</span>
+                                            <span className="text-gray-500">${fee.base_fee.toFixed(2)}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Right Column: Amazon-Style Buy Box */}
-                        <div className="w-full lg:w-3/12">
-                            <div className="sticky top-6 bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
-                                <div className="mb-4">
-                                    <span className="text-4xl font-bold text-white">${currentPrice.toFixed(2)}</span>
+                        {/* Right Column: Clean Buy Box */}
+                        <motion.div variants={itemVariants} className="w-full lg:w-3/12">
+                            <div className="sticky top-24 bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
+                                <div className="mb-6">
+                                    <span className="text-4xl font-semibold text-black tracking-tight">${currentPrice.toFixed(2)}</span>
                                     {currentOption && currentOption.tax > 0 && (
-                                        <p className="text-xs text-gray-400 mt-1">+ ${currentOption.tax} estimated tax</p>
+                                        <p className="text-sm text-gray-400 font-light mt-1">+ ${currentOption.tax} estimated tax</p>
                                     )}
                                 </div>
 
-                                <div className="mb-6">
-                                    <span className={`text-lg font-bold ${inStock ? 'text-green-500' : 'text-red-500'}`}>
+                                <div className="mb-8">
+                                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${inStock ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                         {inStock ? 'In Stock' : 'Out of Stock'}
                                     </span>
-                                    {inStock && <p className="text-xs text-gray-400 mt-1">Order now to reserve.</p>}
                                 </div>
 
-                                {/* Style Selector */}
-                                <div className="mb-5">
-                                    <span className="text-gray-300 text-sm font-medium block mb-2">Color: <span className="text-white font-bold">{selectedOptionKey}</span></span>
+                                {/* Color Selector (Pills) */}
+                                <div className="mb-8">
+                                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider block mb-3">
+                                        Color: <span className="text-black ml-1">{selectedOptionKey}</span>
+                                    </span>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.keys(product.product_options).map(optKey => (
                                             <button
@@ -312,10 +368,11 @@ const Product: React.FC = () => {
                                                     setSelectedSize(firstSize);
                                                     setQuantity(1);
                                                 }}
-                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedOptionKey === optKey
-                                                    ? 'bg-blue-600 text-white border-blue-500 ring-2 ring-blue-500/50'
-                                                    : 'bg-gray-900/50 text-gray-300 border border-gray-600 hover:border-gray-400'
-                                                    }`}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                                                    selectedOptionKey === optKey
+                                                        ? 'bg-black text-white shadow-md'
+                                                        : 'bg-white text-gray-600 border border-gray-200 hover:border-black'
+                                                }`}
                                             >
                                                 {optKey}
                                             </button>
@@ -323,10 +380,12 @@ const Product: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Size Selector */}
+                                {/* Size Selector (Circles) */}
                                 {currentOption && (
-                                    <div className="mb-6">
-                                        <span className="text-gray-300 text-sm font-medium block mb-2">Size: <span className="text-white font-bold">{selectedSize}</span></span>
+                                    <div className="mb-8">
+                                        <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider block mb-3">
+                                            Size: <span className="text-black ml-1">{selectedSize}</span>
+                                        </span>
                                         <div className="flex flex-wrap gap-2">
                                             {Object.entries(currentOption.mp_sizes_to_stock).map(([size, stock]) => {
                                                 const isOutOfStock = stock === 0;
@@ -338,12 +397,13 @@ const Product: React.FC = () => {
                                                             setSelectedSize(size);
                                                             setQuantity(1);
                                                         }}
-                                                        className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${selectedSize === size
-                                                            ? 'bg-blue-600 text-white border-blue-500 ring-2 ring-blue-500/50'
-                                                            : isOutOfStock
-                                                                ? 'bg-gray-800/30 text-gray-600 border border-gray-700/50 cursor-not-allowed line-through'
-                                                                : 'bg-gray-900/50 text-gray-300 border border-gray-600 hover:border-gray-400'
-                                                            }`}
+                                                        className={`w-11 h-11 flex items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${
+                                                            selectedSize === size
+                                                                ? 'bg-black text-white shadow-md'
+                                                                : isOutOfStock
+                                                                    ? 'bg-gray-50 text-gray-300 border border-gray-100 cursor-not-allowed line-through'
+                                                                    : 'bg-white text-gray-600 border border-gray-200 hover:border-black'
+                                                        }`}
                                                     >
                                                         {size}
                                                     </button>
@@ -355,36 +415,40 @@ const Product: React.FC = () => {
 
                                 {/* Quantity & Actions */}
                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-gray-300 text-sm font-medium">Qty:</span>
-                                        <div className={`flex items-center border rounded-lg overflow-hidden bg-gray-900/50 ${inStock ? 'border-gray-600' : 'border-gray-700 opacity-50'}`}>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Quantity</span>
+                                        <div className={`flex items-center border rounded-full overflow-hidden bg-white ${inStock ? 'border-gray-300' : 'border-gray-100 opacity-50'}`}>
                                             <button
                                                 disabled={!inStock}
                                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="px-3 py-1 text-gray-300 hover:bg-gray-700 disabled:hover:bg-transparent transition-colors"
+                                                className="px-4 py-1.5 text-gray-600 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors"
                                             >-</button>
-                                            <span className="px-3 py-1 text-white font-medium border-x border-gray-600 w-10 text-center">{quantity}</span>
+                                            <span className="px-2 py-1.5 text-black font-medium w-10 text-center">{quantity}</span>
                                             <button
                                                 disabled={!inStock || quantity >= currentStock}
                                                 onClick={() => setQuantity(quantity + 1)}
-                                                className="px-3 py-1 text-gray-300 hover:bg-gray-700 disabled:hover:bg-transparent transition-colors"
+                                                className="px-4 py-1.5 text-gray-600 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors"
                                             >+</button>
                                         </div>
                                     </div>
 
-                                    <button disabled={!inStock} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900/50 disabled:text-blue-300/50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-blue-900/30">
+                                    {/* Minimalist Solid/Outline Buttons */}
+                                    <button disabled={!inStock} className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-medium py-3.5 px-4 rounded-full transition-all duration-300 shadow-sm">
                                         Buy Now
                                     </button>
-                                    <button disabled={!inStock} className="w-full bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 border border-gray-600">
+                                    <button disabled={!inStock} className="w-full bg-white hover:bg-gray-50 disabled:bg-white disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed text-black font-medium py-3.5 px-4 rounded-full transition-all duration-300 border border-black">
                                         Add to Cart
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </motion.div>
                 )}
 
-                <ProductReviews productId={product?._id || ''} />
+                {/* Reviews Section Anchor */}
+                <div ref={reviewsRef} className="mt-24">
+                    <ProductReviews productId={product?._id || ''} />
+                </div>
 
             </div>
         </div>

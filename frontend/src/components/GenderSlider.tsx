@@ -12,9 +12,9 @@ const GenderSlider = () => {
 
     const handleDragEnd = (_, info) => {
     if (info.offset.x < -50) {
-        navigate("/store/male");
+        navigate("/store/men");
     } else if (info.offset.x > 50) {
-        navigate("/store/female");
+        navigate("/store/women");
     }
 };
 

@@ -22,9 +22,8 @@ router.get("/:gender", async (req, res) => {
     const clothingItems = await clothingQuery;
 
     if (!clothingItems || clothingItems.length === 0) {
-      return res.status(STATUS_NOT_FOUND).json({
-        error: "No clothing items found for this gender"
-      });
+       res.json([]); // Return empty array if no items found
+        return;
     }
 
     const reviewIds = clothingItems

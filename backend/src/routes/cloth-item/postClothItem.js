@@ -2,16 +2,17 @@ const express = require("express");
 const router = express.Router();
 const Clothing = require("../../schemas/clothing");
 const statusCodes = require("../utils/constants");
+const Review = require("../../schemas/review");
 
 router.post("/save-item", async (req, res) => {
   try {
-    const {
+    let {
       title,
       title_image,
       product_type,
       mp_des_title_to_description,
-      gender,
-      product_options,
+      gender, //men, women, unisex
+      product_options, 
       mp_delivery_type_to_fee,
       product_reviews_id,
       product_image,
@@ -69,8 +70,21 @@ router.post("/save-item", async (req, res) => {
         });
       }
     }
+    
+    if (!product_reviews_id) {
+      // Create an empty review document and get its ID
+      const newReviewDoc = new Review({
+        review: [],
+        rating: 0,
+        reviewCount: 0,
+        clothing_Id: null // will update this after creating the clothing item
+      });
+      const savedReviewDoc = await newReviewDoc.save();
+      product_reviews_id = savedReviewDoc._id;
+    }
 
     /* -----------------------------
+  
        Create Document
     ----------------------------- */
     const newClothing = new Clothing({
@@ -86,6 +100,10 @@ router.post("/save-item", async (req, res) => {
       product_video: product_video || []
     });
 
+    // Update the review document with the clothing item's ID
+    if (product_reviews_id) {
+      await Review.findByIdAndUpdate(product_reviews_id, { clothing_Id: newClothing._id });
+    }
     const savedClothing = await newClothing.save();
 
     res.status(statusCodes.STATUS_CREATED).json(savedClothing);

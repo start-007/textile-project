@@ -15,8 +15,8 @@ export const API_ROUTES={
     REVIEWS: "/api/reviews"
 }
 export const GENDER_TYPES = {
-    MALE: 'male',
-    FEMALE: 'female',
+    MEN: 'men',
+    WOMEN: 'women',
     UNISEX: 'unisex',
     ALL: 'all'
 };

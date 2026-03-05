@@ -1,92 +1,156 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Added react-router-dom
-import { useCartStore } from '../utils/useCartStore';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-// --- ATOM: The Brand Logo ---
-const NavLogo = () => (
-  <div className="flex items-center gap-2 text-white text-lg font-bold tracking-tight">
-    <div className="w-5 h-5 bg-indigo-500 rounded-full" />
-    <span>Company Name</span>
-  </div>
-);
-
-// --- ATOM: The Individual Link ---
-// Upgraded to use react-router-dom's <Link> for instant navigation
-const NavLink = ({ href, label, icon, count, className = "", onClick }) => {
-  return (
-    <Link 
-      to={href} 
-      onClick={onClick}
-      className={`group flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300 ${className}`}
-    >
-      {icon && <span className="group-hover:scale-110 transition-transform">{icon}</span>}
-      <span>{label}</span>
-      {count !== undefined && count > 0 && (
-        <span className="flex items-center justify-center bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold border border-white/30 group-hover:bg-indigo-500 group-hover:border-indigo-400 transition-colors">
-          {count}
-        </span>
-      )}
-    </Link>
-  );
-};
-
-// --- ORCHESTRATOR: The Navbar ---
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation(); // 1. Get current route
 
-  // Hook into Zustand to calculate total items
-  const cart = useCartStore((state) => state.cart);
-  const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+  // 2. Determine if we are on the home page
+  const isHome = location.pathname === '/';
 
-  // Helper to close mobile menu on click
-  const handleNavClick = () => setIsOpen(false);
+  // 3. The Navbar should be "solid" (white) if:
+  // - We are NOT on the home page
+  // - OR we have scrolled down on the home page
+  // - OR the mobile menu is open
+  const shouldBeSolid = !isHome || isScrolled || isMobileMenuOpen;
 
-  // Centralized Navigation Data
-  const navItems = [
-    { label: 'Home', href: '/', onClick: handleNavClick },
-    { label: 'Store', href: '/store/all', onClick: handleNavClick },
-    { label: 'About', href: '/about', onClick: handleNavClick },
-    { 
-      label: 'Cart', 
-      href: '/cart', // Now points to the /cart route!
-      onClick: handleNavClick, 
-      count: totalItems, 
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-      ) 
-    },
+  // Handle scroll state for background changes
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Prevent scrolling when the mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMobileMenuOpen]);
+
+  const navLinks = [
+    { name: "Men", href: "/store/men" },
+    { name: "Women", href: "/store/women" },
+    { name: "Lookbook", href: "/lookbook" },
+    { name: "About", href: "/about" }
   ];
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-40 bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl md:rounded-full px-6 py-3 transition-all duration-300">
-      <div className="flex items-center justify-between">
-        <NavLogo />
+    <>
+      <nav className={`fixed top-0 left-0 w-full z-50 flex items-center justify-between transition-all duration-300
+        px-6 md:px-12 pt-12 pb-12
+        ${shouldBeSolid ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm' : 'bg-transparent'}
+      `}>
+        
+        {/* 1. Logo Section */}
+        <div className={`relative z-20 flex items-center transition-colors duration-300 ${shouldBeSolid ? 'text-black' : 'text-white'}`}>
+          <div className="flex items-end gap-[2px] mr-2 h-5">
+            <div className="w-1 h-3 bg-current"></div>
+            <div className="w-1 h-5 bg-current"></div>
+            <div className="w-1 h-4 bg-current"></div>
+          </div>
+          <a href='/'>
+            <span className="text-[18px] font-semibold tracking-tight">Sarwantrika</span>
+          </a>
 
-        {/* Desktop Mapping */}
-        <div className="hidden md:flex items-center space-x-8">
-          {navItems.map((item) => (
-            <NavLink key={item.label} {...item} />
+          <span className={`mx-3 text-[18px] font-light opacity-40 ${shouldBeSolid ? 'text-black' : 'text-white'}`}>|</span>
+          <a href='/store'>
+            <span className="text-[18px] font-normal tracking-wide">Store</span>
+          </a>
+        </div>
+
+        {/* 2. Desktop Center Links (Hidden on Mobile) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-2">
+          {navLinks.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`
+                px-4 py-1.5 rounded-full text-[14px] font-normal transition-all duration-300 backdrop-blur-md
+                ${shouldBeSolid 
+                  ? 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-800' 
+                  : 'bg-white/10 hover:bg-white/20 text-white/95 border border-white/[0.05]' 
+                }
+              `}
+            >
+              {item.name}
+            </a>
           ))}
         </div>
 
-        {/* Mobile Toggle */}
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-white p-1">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} />
-          </svg>
-        </button>
+        {/* 3. Right Actions & Mobile Toggle */}
+        <div className={`relative z-20 flex items-center gap-3 md:gap-4 transition-colors duration-300 ${shouldBeSolid ? 'text-black' : 'text-white'}`}>
+          
+          {/* Cart Button (Always visible) */}
+          <button 
+            className={`
+              px-3 py-1 rounded-full text-[13px] font-medium transition-colors duration-300
+              ${shouldBeSolid
+                ? 'bg-black text-white hover:bg-gray-800' 
+                : 'bg-white text-black hover:bg-gray-200'
+              }
+            `}
+          >
+            Cart (0)
+          </button>
+          
+          {/* Search Text (Hidden on very small screens) */}
+          <button className="hidden sm:block text-[14px] font-normal hover:opacity-70 transition-opacity">
+            Search
+          </button>
+
+          {/* Mobile Menu Toggle (Hamburger / X icon) */}
+          <button 
+            className="md:hidden ml-2 p-1"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? (
+              // X (Close) Icon
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              // Hamburger Icon
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* 4. Mobile Menu Overlay (Glassmorphism Dropdown) */}
+      <div className={`
+        fixed top-0 left-0 w-full h-screen bg-white/95 backdrop-blur-2xl z-40 transition-transform duration-500 ease-in-out md:hidden flex flex-col pt-24 px-6
+        ${isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}
+      `}>
+        <div className="py-12 flex flex-col gap-6 text-2xl font-semibold text-black tracking-tight">
+          {navLinks.map((item) => (
+            <a 
+              key={item.name}
+              href={item.href}
+              className="border-b border-gray-100 pb-4 hover:text-gray-500 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {item.name}
+            </a>
+          ))}
+          <a 
+            href="#search"
+            className="border-b border-gray-100 pb-4 hover:text-gray-500 transition-colors sm:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Search
+          </a>
+        </div>
       </div>
-
-      {/* Mobile Menu Mapping */}
-      {isOpen && (
-        <div className="md:hidden mt-4 pb-4 space-y-4 flex flex-col items-center border-t border-white/10 pt-4">
-          {navItems.map((item) => (
-            <NavLink key={item.label} {...item} className="w-full justify-center" />
-          ))}
-        </div>
-      )}
-    </nav>
+    </>
   );
 }

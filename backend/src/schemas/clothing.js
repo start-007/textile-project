@@ -7,7 +7,12 @@ const clothingSchema = new Schema({
   title_image: { type: String, required: true }, // front image displayed With all others..
   product_type: { type: String, required: true }, // e.g., shirt, pants, etc.
   mp_des_title_to_description: { type: Map, of: String }, // Something like {"Material": "100% Cotton", "Care": "Machine wash cold"}
-  gender: { type: String, required: true }, // MALE, FEMALE, UNISEX
+  gender: {
+    type: String,
+    required: true,
+    enum: ["men", "women", "unisex"],
+    lowercase: true, // optional: ensures stored value is lowercase
+  },
   product_options: { // Map of color to its options like sizes, price, images, videos
     type: Map,
     of: new Schema({
@@ -42,7 +47,7 @@ const clothingSchema = new Schema({
       }
     }, { _id: false }),
     default: {}
-  }, 
+  },
   product_reviews_id: { type: Schema.Types.ObjectId, ref: 'Review' }, // single review reference
   product_image: [{ type: String, required: true }], // s3 urls
   product_video: [{ type: String, required: true }], // s3 urls
