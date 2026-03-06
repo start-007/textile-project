@@ -8,7 +8,7 @@ export default function Navbar() {
   const location = useLocation(); // 1. Get current route
 
   // 2. Determine if we are on the home page
-  const isHome = location.pathname === '/';
+  const isHome = location.pathname === '/' 
 
   // 3. The Navbar should be "solid" (white) if:
   // - We are NOT on the home page
@@ -101,9 +101,9 @@ export default function Navbar() {
           </button>
           
           {/* Search Text (Hidden on very small screens) */}
-          <button className="hidden sm:block text-[14px] font-normal hover:opacity-70 transition-opacity">
+          {/* <button className="hidden sm:block text-[14px] font-normal hover:opacity-70 transition-opacity">
             Search
-          </button>
+          </button> */}
 
           {/* Mobile Menu Toggle (Hamburger / X icon) */}
           <button 
@@ -142,13 +142,13 @@ export default function Navbar() {
               {item.name}
             </a>
           ))}
-          <a 
+          {/* <a 
             href="#search"
             className="border-b border-gray-100 pb-4 hover:text-gray-500 transition-colors sm:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Search
-          </a>
+          </a> */}
         </div>
       </div>
     </>

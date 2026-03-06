@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { Navigate, useNavigate } from "react-router-dom";
-import DecryptedText from "./DecryptedText";
+import DecryptedText from "./FullScreenVideo";
 
 const GenderSlider = () => {
     const x = useMotionValue(0);
