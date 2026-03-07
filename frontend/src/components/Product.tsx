@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductReviews from './ProductReviews';
 import { URLS, API_BASE_URL } from '../utils/constants.js';
+import { useCartStore } from '../utils/useCartStore.js'
 
 // --- Types ---
 interface ProductOption {
@@ -143,7 +144,13 @@ const mock_data: ProductDetails = {
 const Product: React.FC = () => {
     const [product, setProduct] = useState<ProductDetails | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
+    
+    // Alert State
+    const [showAlert, setShowAlert] = useState<boolean>(false);
+    const alertTimerRef = useRef<NodeJS.Timeout | null>(null);
+
     const navigate = useNavigate();
+    const addToCart = useCartStore((state) => state.addToCart);
 
     // Selection State
     const [selectedOptionKey, setSelectedOptionKey] = useState<string>("");
@@ -154,12 +161,69 @@ const Product: React.FC = () => {
     const reviewsRef = useRef<HTMLDivElement>(null);
     const param = useParams<{ id: string }>();
     const productId = param.id || mock_data._id; // Fallback to mock ID if testing directly
+    
+    // Derived state (moved up so handleAddToCart can access currentOption)
+    const currentOption = product && selectedOptionKey ? product.product_options[selectedOptionKey] : null;
+    const currentPrice = currentOption ? currentOption.price + (currentOption.priceAdjustment || 0) : 0;
+    const currentStock = currentOption && selectedSize ? currentOption.mp_sizes_to_stock[selectedSize] || 0 : 0;
+    const inStock = currentStock > 0;
+
+    const currentGallery = currentOption && currentOption.images.length > 0
+        ? currentOption.images
+        : product?.product_image || [product?.title_image || ""];
+    const mainImage = currentGallery[activeImageIndex] || currentGallery[0];
+
+    const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, product: ProductDetails) => {
+        e.preventDefault();
+
+        // Ensure we have a valid selection before adding to cart
+        if (!selectedOptionKey || !selectedSize || !currentOption) {
+            console.warn("Please select a color and size before adding to cart.");
+            return;
+        }
+
+        // Construct the payload based on currently selected options
+        const cartItem = {
+            productId: product._id,
+            title: product.title,
+            color: selectedOptionKey,
+            size: selectedSize,
+            quantity: quantity,
+            price: currentPrice,
+            image: mainImage, // Uses the currently active image or the first image of the selected color
+            tax: currentOption.tax,
+        };
+
+        // Dispatch to your Zustand store
+        addToCart(cartItem);
+
+        // Trigger Alert Notification
+        setShowAlert(true);
+        
+        // Clear existing timer if user clicks rapidly
+        if (alertTimerRef.current) {
+            clearTimeout(alertTimerRef.current);
+        }
+        
+        // Auto-hide after 1.5 seconds
+        alertTimerRef.current = setTimeout(() => {
+            setShowAlert(false);
+        }, 1500);
+    };
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 // By the time the 800ms animation in Store finishes, the data should theoretically be ready.
                 // We resolve this immediately to avoid flashing a skeleton screen.
+                window.scrollTo(0,0)
                 const data = mock_data;
                 setProduct(data);
 
@@ -186,17 +250,6 @@ const Product: React.FC = () => {
         fetchProduct();
     }, [productId]);
 
-    // Derived state
-    const currentOption = product && selectedOptionKey ? product.product_options[selectedOptionKey] : null;
-    const currentPrice = currentOption ? currentOption.price + (currentOption.priceAdjustment || 0) : 0;
-    const currentStock = currentOption && selectedSize ? currentOption.mp_sizes_to_stock[selectedSize] || 0 : 0;
-    const inStock = currentStock > 0;
-
-    const currentGallery = currentOption && currentOption.images.length > 0
-        ? currentOption.images
-        : product?.product_image || [product?.title_image || ""];
-    const mainImage = currentGallery[activeImageIndex] || currentGallery[0];
-
     const renderStars = (rating: number = 5) => {
         return (
             <div className="flex text-black text-sm gap-0.5">
@@ -212,7 +265,19 @@ const Product: React.FC = () => {
     if (!product) return null; // Prevents render until immediate mock data load
 
     return (
-        <div className="min-h-screen bg-[#FFFFFF] pt-40 pb-24 px-6 md:px-12 lg:px-24 font-sans text-black">
+        <div className="min-h-screen bg-[#FFFFFF] pt-40 pb-24 px-6 md:px-12 lg:px-24 font-sans text-black relative">
+            
+            {/* ADDED TO CART ALERT */}
+            <div 
+                className={`fixed top-24 left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-300 ease-out flex items-center gap-2.5 px-6 py-3 rounded-full shadow-lg text-[14px] font-medium tracking-wide
+                ${showAlert ? 'opacity-100 translate-y-0 bg-black text-white' : 'opacity-0 -translate-y-4 bg-black text-white'}`}
+            >
+                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Added to cart
+            </div>
+
             <div className="max-w-7xl mx-auto">
                 <motion.div
                     variants={pageVariants}
@@ -223,7 +288,7 @@ const Product: React.FC = () => {
                     {/* Left Column: Premium Image Gallery (Order 1 everywhere) */}
                     {/* We specifically DO NOT add variants={itemVariants} here so the image doesn't fade/slide in */}
                     <div className="w-full lg:w-5/12 flex flex-col-reverse sm:flex-row gap-4 order-1">
-                        
+
                         {/* Thumbnails - these get the slide up animation */}
                         <motion.div variants={itemVariants} className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-20 shrink-0 pb-2 sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {currentGallery.map((img, idx) => (
@@ -259,7 +324,7 @@ const Product: React.FC = () => {
                                     className="object-cover w-full h-full"
                                 />
                             </AnimatePresence>
-                            
+
                             {/* Floating Product Type Pill */}
                             <motion.div variants={itemVariants} className="absolute top-5 left-5 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full shadow-sm border border-black/5">
                                 <span className="text-[11px] font-semibold text-black uppercase tracking-widest">
@@ -409,7 +474,7 @@ const Product: React.FC = () => {
                                 <button disabled={!inStock} className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-full transition-all duration-300 shadow-sm">
                                     Buy Now
                                 </button>
-                                <button disabled={!inStock} className="w-full bg-white hover:bg-gray-50 disabled:bg-white disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed text-black font-medium py-3 px-4 rounded-full transition-all duration-300 border border-black">
+                                <button onClick={(e) => { handleAddToCart(e, product) }} disabled={!inStock} className="w-full bg-white hover:bg-gray-50 disabled:bg-white disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed text-black font-medium py-3 px-4 rounded-full transition-all duration-300 border border-black">
                                     Add to Cart
                                 </button>
                             </div>

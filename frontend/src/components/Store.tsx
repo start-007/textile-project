@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useCartStore } from "../utils/useCartStore.js";
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { URLS, API_BASE_URL } from '../utils/constants.js';
 
 // --- Types ---
@@ -28,7 +27,6 @@ interface Product {
 interface ProductCardProps {
     product: Product;
     navigate: ReturnType<typeof useNavigate>;
-    handleAddToCart: (e: React.MouseEvent, product: Product) => void;
     expandingId: string | null;
     setExpandingId: (id: string | null) => void;
 }
@@ -61,6 +59,35 @@ const headerVariants = {
         transition: { duration: 0.8, ease: easeOutQuart }
     }
 };
+const skeletonContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.15 }
+    }
+};
+
+const skeletonVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: easeOutQuart }
+    }
+};
+const Shimmer = () => (
+    <motion.div
+        className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-r from-transparent via-white/60 to-transparent z-10"
+        initial={{ x: '-100%' }}
+        animate={{ x: '200%' }}
+        transition={{
+            repeat: Infinity,
+            duration: 1.5,
+            ease: "linear",
+            repeatDelay: 0.2 // Slight pause between sweeps makes it feel more natural
+        }}
+    />
+);
 
 const mockProducts: Product[] = [
     {
@@ -84,6 +111,7 @@ const mockProducts: Product[] = [
             }
         }
     },
+
     {
         _id: "prod_102",
         title: "Pace Breaker Training Shorts",
@@ -106,23 +134,60 @@ const mockProducts: Product[] = [
                 ]
             }
         }
-    }
+    },
+    {
+        _id: "prod_8fa92b3c4de", // Matched ID to your Product.tsx mock data for seamless testing
+        title: "AeroShell Anorak",
+        product_type: "Outerwear",
+        gender: "mens",
+        rating: 4.8,
+        reviewCount: 342,
+        product_reviews_id: "rev_92b3c4d5e8fa",
+        product_options: {
+            "Obsidian Black": {
+                mp_sizes_to_stock: { XS: 5, S: 12, M: 0, L: 24, XL: 8 },
+                price: 245,
+                priceAdjustment: 0,
+                tax: 18.5,
+                images: [
+                    "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80"
+                ],
+                videos: []
+            }
+        }
+    },
 ];
 
 // --- Sub-components ---
 const SkeletonCard = () => (
-    <div className="flex flex-col w-full animate-pulse">
-        <div className="w-full aspect-square bg-gray-200 rounded-3xl mb-4"></div>
-        <div className="flex justify-between items-start mb-2">
-            <div className="h-5 bg-gray-200 w-2/3 rounded-md"></div>
-            <div className="h-5 bg-gray-200 w-1/4 rounded-md"></div>
+    <motion.div variants={skeletonVariants} className="flex flex-col w-full">
+        {/* Main Image Skeleton */}
+        <div className="w-full aspect-square bg-gray-200/80 rounded-3xl mb-4 relative overflow-hidden">
+            <Shimmer />
         </div>
-        <div className="h-4 bg-gray-200 w-1/3 rounded-md mb-4"></div>
-        <div className="h-10 bg-gray-200 w-full rounded-xl mt-auto"></div>
-    </div>
-);
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddToCart, expandingId, setExpandingId }) => {
+        {/* Title & Price Skeleton */}
+        <div className="flex justify-between items-start mb-2">
+            <div className="h-5 bg-gray-200/80 w-2/3 rounded-md relative overflow-hidden">
+                <Shimmer />
+            </div>
+            <div className="h-5 bg-gray-200/80 w-1/4 rounded-md relative overflow-hidden">
+                <Shimmer />
+            </div>
+        </div>
+
+        {/* Rating Skeleton */}
+        <div className="h-4 bg-gray-200/80 w-1/3 rounded-md mb-4 relative overflow-hidden">
+            <Shimmer />
+        </div>
+
+        {/* Button Skeleton */}
+        <div className="h-11 bg-gray-200/80 w-full rounded-xl mt-auto relative overflow-hidden">
+            <Shimmer />
+        </div>
+    </motion.div>
+);
+const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, expandingId, setExpandingId }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -149,7 +214,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
     }, []);
 
     const handleInteractionStart = () => {
-        if (expandingId) return; 
+        if (expandingId) return;
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
             setIsPlaying(true);
@@ -162,12 +227,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
     const handleCardClick = () => {
         if (expandingId) return;
         setExpandingId(product._id);
-        
+
         // Wait exactly for the 0.8s animation duration to finish before routing
         setTimeout(() => {
             navigate(`/store/product/${product._id}`);
-            setTimeout(() => setExpandingId(null), 100); 
-        }, 800); 
+            setTimeout(() => setExpandingId(null), 100);
+        }, 800);
     };
 
     return (
@@ -180,7 +245,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
             className="group flex flex-col cursor-pointer"
         >
             {/* The layoutId ties this card to the overlay animation target */}
-            <motion.div 
+            <motion.div
                 layoutId={`card-image-${product._id}`}
                 className="relative w-full aspect-square mb-4 overflow-hidden rounded-3xl bg-white"
             >
@@ -212,7 +277,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
                 </motion.div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
                 animate={{ opacity: expandingId ? 0 : 1, transition: { duration: 0.3 } }}
                 className="flex flex-col px-1"
             >
@@ -246,14 +311,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
                 </div>
 
                 <button
-                    onClick={(e) => handleAddToCart(e, product)}
+                    onClick={handleCardClick}
                     aria-label="Add to Cart"
                     className="mt-4 w-full py-2.5 rounded-xl border transition-all duration-300 flex justify-center items-center gap-2 group/btn bg-black text-white border-black lg:bg-white lg:text-black lg:border-gray-200 lg:hover:bg-black lg:hover:text-white lg:hover:border-black"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Add to Cart
+
+                    Details
                 </button>
             </motion.div>
         </motion.div>
@@ -261,20 +324,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, navigate, handleAddT
 };
 
 const Store: React.FC = () => {
+
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [expandingId, setExpandingId] = useState<string | null>(null);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-    
+
     const navigate = useNavigate();
-    const addToCart = useCartStore((state) => state.addToCart);
-    const params = useParams<{ gender: string }>(); 
+    const params = useParams<{ gender: string }>();
     const gender = params.gender;
 
     useEffect(() => {
         const fetchProducts = async () => {
-            setIsLoading(true); 
+            setIsLoading(true);
             try {
                 setTimeout(() => {
                     setProducts(mockProducts);
@@ -287,14 +350,10 @@ const Store: React.FC = () => {
         fetchProducts();
     }, [gender]);
 
-    const handleAddToCart = (e: React.MouseEvent, product: Product) => {
-        e.stopPropagation(); 
-        addToCart(product);
-    };
 
     const availableTypes = Array.from(new Set(products.map((p) => p.product_type)));
     const toggleTypeFilter = (type: string) => {
-        setSelectedTypes((prev) => 
+        setSelectedTypes((prev) =>
             prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
         );
     };
@@ -311,11 +370,11 @@ const Store: React.FC = () => {
                 <div className="flex flex-col gap-3">
                     {availableTypes.length > 0 ? availableTypes.map((type) => (
                         <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                            <input 
-                                type="checkbox" 
-                                className="hidden" 
+                            <input
+                                type="checkbox"
+                                className="hidden"
                                 checked={selectedTypes.includes(type)}
-                                onChange={() => toggleTypeFilter(type)} 
+                                onChange={() => toggleTypeFilter(type)}
                             />
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedTypes.includes(type) ? 'bg-black border-black text-white' : 'border-gray-300 group-hover:border-gray-400'}`}>
                                 {selectedTypes.includes(type) && (
@@ -347,7 +406,7 @@ const Store: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#FAFAFA] pt-36 pb-24 px-6 md:px-12 lg:px-24 font-sans text-black relative">
-            
+
             {/* MAGIC OVERLAY: 
               This precisely matches the structure, padding, and layout grid of Product.tsx.
               When a card is clicked, Framer Motion seamlessly morphs the grid image 
@@ -358,10 +417,10 @@ const Store: React.FC = () => {
                 {expandingId && expandingProduct && (
                     <div className="fixed inset-0 z-[100] pointer-events-none flex justify-center pt-40 px-6 md:px-12 lg:px-24">
                         <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-12 lg:gap-16">
-                            
+
                             {/* This div structure strictly mimics the left column in Product.tsx */}
                             <div className="w-full lg:w-5/12 flex flex-col-reverse sm:flex-row gap-4">
-                                
+
                                 {/* Invisible spacer mimicking the thumbnail column so the main image alignment is perfect */}
                                 <div className="hidden sm:block sm:w-20 shrink-0" />
 
@@ -385,7 +444,7 @@ const Store: React.FC = () => {
             </AnimatePresence>
 
             <div className="max-w-[1400px] mx-auto">
-                <motion.div 
+                <motion.div
                     variants={headerVariants}
                     initial="hidden"
                     animate={expandingId ? { opacity: 0, transition: { duration: 0.3 } } : "visible"}
@@ -434,11 +493,16 @@ const Store: React.FC = () => {
 
                     <div className="flex-1 w-full">
                         {isLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+                            <motion.div
+                                variants={skeletonContainerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
+                            >
                                 {[...Array(6)].map((_, index) => (
                                     <SkeletonCard key={index} />
                                 ))}
-                            </div>
+                            </motion.div>
                         ) : (
                             <motion.div
                                 key={selectedTypes.join(',')}
@@ -458,11 +522,10 @@ const Store: React.FC = () => {
                                 ) : null}
 
                                 {filteredProducts.map((product) => (
-                                    <ProductCard 
-                                        key={product._id} 
-                                        product={product} 
-                                        navigate={navigate} 
-                                        handleAddToCart={handleAddToCart}
+                                    <ProductCard
+                                        key={product._id}
+                                        product={product}
+                                        navigate={navigate}
                                         expandingId={expandingId}
                                         setExpandingId={setExpandingId}
                                     />

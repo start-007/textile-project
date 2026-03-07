@@ -96,16 +96,7 @@ const AddReview: React.FC = () => {
             <div className="max-w-3xl mx-auto">
                 
                 {/* Minimalist Back Button */}
-                <button 
-                    className="flex items-center text-gray-500 hover:text-black transition-colors mb-10 group text-sm font-medium tracking-wide" 
-                    onClick={() => navigate(-1)}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Product
-                </button>
-
+                
                 <motion.div 
                     variants={pageVariants}
                     initial="hidden"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '../utils/useCartStore';
@@ -10,6 +10,7 @@ interface CartItem {
     price: number;
     quantity: number;
     image?: string; 
+    color?: string;
     style?: string; 
     size?: string;  
 }
@@ -41,6 +42,9 @@ const itemVariants = {
 };
 
 const CartPage: React.FC = () => {
+    useEffect(()=>{
+        window.scrollTo(0,0)
+    },[])
     const { cart, updateQuantity, removeItem } = useCartStore() as {
         cart: CartItem[];
         updateQuantity: (id: string | number, qty: number) => void;
@@ -140,11 +144,14 @@ const CartPage: React.FC = () => {
                                                         </h3>
                                                     </Link>
                                                     {(item.style || item.size) && (
-                                                        <p className="text-sm text-gray-400 mt-2 font-light">
+                                                        <p className="text-sm text-black-400 mt-2 font-light">
                                                             {item.style && <span className="uppercase tracking-wider">{item.style}</span>}
                                                             {item.style && item.size && <span className="mx-2">|</span>}
-                                                            {item.size && <span className="uppercase tracking-wider">Size {item.size}</span>}
+                                                            {item.size && <span className="uppercase tracking-wider">Size: {item.size}</span>}
+                                                            {item.color && item.color && <span className="mx-2">|</span>}
+                                                            {item.color && <span className="uppercase tracking-wider">Color: {item.color}</span>}
                                                         </p>
+                                                        
                                                     )}
                                                 </div>
                                                 <span className="text-xl font-medium text-black shrink-0">

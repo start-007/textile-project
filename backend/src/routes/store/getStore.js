@@ -13,7 +13,9 @@ router.get("/:gender", async (req, res) => {
     const { gender } = req.params;
 
     const retrieveFields = { title: 1, product_options: 1, product_type: 1, _id: 1, gender: 1, product_reviews_id: 1 };
-
+    if(!gender){
+      gender=GENDER_TYPES.ALL
+    }
     // Use lean() to get plain JS objects directly
     const clothingQuery = (GENDER_TYPES.ALL === gender) 
       ? Clothing.find({}, retrieveFields).lean()

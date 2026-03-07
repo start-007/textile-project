@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useCartStore } from "../utils/useCartStore.js";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -8,7 +9,7 @@ export default function Navbar() {
   const location = useLocation(); // 1. Get current route
 
   // 2. Determine if we are on the home page
-  const isHome = location.pathname === '/' 
+  const isHome = location.pathname === '/'
 
   // 3. The Navbar should be "solid" (white) if:
   // - We are NOT on the home page
@@ -40,6 +41,9 @@ export default function Navbar() {
     { name: "Lookbook", href: "/lookbook" },
     { name: "About", href: "/about" }
   ];
+  const cartCount = useCartStore((state) =>
+    state.cart.reduce((total, item) => total + item.quantity, 0)
+  );
 
   return (
     <>
@@ -47,7 +51,7 @@ export default function Navbar() {
         px-6 md:px-12 pt-12 pb-12
         ${shouldBeSolid ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm' : 'bg-transparent'}
       `}>
-        
+
         {/* 1. Logo Section */}
         <div className={`relative z-20 flex items-center transition-colors duration-300 ${shouldBeSolid ? 'text-black' : 'text-white'}`}>
           <div className="flex items-end gap-[2px] mr-2 h-5">
@@ -73,9 +77,9 @@ export default function Navbar() {
               href={item.href}
               className={`
                 px-4 py-1.5 rounded-full text-[14px] font-normal transition-all duration-300 backdrop-blur-md
-                ${shouldBeSolid 
-                  ? 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-800' 
-                  : 'bg-white/10 hover:bg-white/20 text-white/95 border border-white/[0.05]' 
+                ${shouldBeSolid
+                  ? 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-800'
+                  : 'bg-white/10 hover:bg-white/20 text-white/95 border border-white/[0.05]'
                 }
               `}
             >
@@ -86,27 +90,44 @@ export default function Navbar() {
 
         {/* 3. Right Actions & Mobile Toggle */}
         <div className={`relative z-20 flex items-center gap-3 md:gap-4 transition-colors duration-300 ${shouldBeSolid ? 'text-black' : 'text-white'}`}>
-          
+
           {/* Cart Button (Always visible) */}
-          <button 
+
+          <button onClick={() => { navigate('/cart') }}
             className={`
-              px-3 py-1 rounded-full text-[13px] font-medium transition-colors duration-300
-              ${shouldBeSolid
-                ? 'bg-black text-white hover:bg-gray-800' 
-                : 'bg-white text-black hover:bg-gray-200'
-              }
-            `}
+    relative flex items-center justify-center
+    w-10 h-10 rounded-full transition-colors
+    ${shouldBeSolid
+                ? 'bg-black text-white hover:bg-gray-800'
+                : 'bg-white text-black hover:bg-gray-200'}
+  `}
           >
-            Cart (0)
+            {/* Bag Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M5 8h14l-1 12H6L5 8z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M9 8a3 3 0 016 0" />
+            </svg>
+
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+              {cartCount}
+            </span>
           </button>
-          
+
           {/* Search Text (Hidden on very small screens) */}
           {/* <button className="hidden sm:block text-[14px] font-normal hover:opacity-70 transition-opacity">
             Search
           </button> */}
 
           {/* Mobile Menu Toggle (Hamburger / X icon) */}
-          <button 
+          <button
             className="md:hidden ml-2 p-1"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle Menu"
@@ -133,7 +154,7 @@ export default function Navbar() {
       `}>
         <div className="py-12 flex flex-col gap-6 text-2xl font-semibold text-black tracking-tight">
           {navLinks.map((item) => (
-            <a 
+            <a
               key={item.name}
               href={item.href}
               className="border-b border-gray-100 pb-4 hover:text-gray-500 transition-colors"
