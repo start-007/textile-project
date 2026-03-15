@@ -62,3 +62,4 @@ router.get("/:gender", async (req, res) => {
 });
 
 module.exports = router;
+I am preparing for midterm.. explain the concept in the image clearly with examples easy to understand and the possible questions from the concept..

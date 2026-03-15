@@ -1,11 +1,12 @@
 import React from 'react';
 import Navbar from './Navbar'; // Your existing glassmorphism navbar
 import VideoHero from './VideoHero';
-import CapabilitiesGrid from './CapabilitiesGrid';
+import ProductDetailSection from './ProductDetailSection';
 import ProductShowcase from './ProductShowcase';
 import Footer from './footer';
-
-export default function App() {
+import Testimonials from './Testimonials'
+import PerspectiveGrid from './PerspectiveGrid'
+export default function Homepage() {
   return (
     <div className="relative w-full min-h-screen font-sans">
       {/* Since the navbar is "glassmorphism" and likely uses 'fixed' or 'absolute' positioning, 
@@ -19,8 +20,14 @@ export default function App() {
         
         {/* The rest of your website will stack naturally below as the user scrolls */}
         <ProductShowcase />
+        
 
-        <CapabilitiesGrid />
+
+        <ProductDetailSection />
+        
+        <Testimonials />
+        
+
       </main>
     </div>
   );

@@ -1,163 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import video from "../assets/video.mp4";
-import {MEDIA_TYPE} from '../utils/constants.js'
+import { ArrowRight } from 'lucide-react';
+import video from '../assets/Video_Generation_Complete.mp4';
+
 export default function MultiMediaHero() {
   const slides = [
-    {
-      type: MEDIA_TYPE.VIDEO,
+    { 
+      type: 'video', 
       src: video, 
-      title: 'VISIONARY APPAREL.',
-      subtitle: 'Engineered for the future. Experience the next generation of streetwear.',
-      buttonText: 'Shop the Collection'
+      title: 'VISIONARY APPAREL.', 
+      buttonText: 'Shop the Collection' 
     },
-    {
-      type: MEDIA_TYPE.IMAGE,
-      src: 'https://img.freepik.com/free-photo/shop-clothing-clothes-shop-hanger-modern-shop-boutique_1150-8886.jpg?semt=ais_rp_progressive&w=740&q=80',
-      title: 'THE FW26 LINEUP.',
-      subtitle: 'High-performance fabrics meet modern, minimalist design.',
-      buttonText: 'Explore Lookbook'
-    },
-    {
-      type:MEDIA_TYPE.IMAGE,
-      src: 'https://t3.ftcdn.net/jpg/03/34/79/68/360_F_334796865_VVTjg49nbLgQPG6rgKDjVqSb5XUhBVsW.jpg',
-      title: 'BUILT TO MOVE.',
-      subtitle: 'Breathable, sustainable, and crafted for maximum mobility.',
-      buttonText: 'Discover Tech'
+    { 
+      type: 'image', 
+      src: 'https://img.freepik.com/free-photo/shop-clothing-clothes-shop-hanger-modern-shop-boutique_1150-8886.jpg?w=740', 
+      title: 'THE FW26 LINEUP.', 
+      buttonText: 'Explore Lookbook' 
     }
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const [borderRadius, setBorderRadius] = useState(0);
+  const [contentOpacity, setContentOpacity] = useState(1);
+  
+  // Dragging states
+  const [dragStart, setDragStart] = useState(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Auto-play timer
-  useEffect(() => {
-    if (slides.length > 1) {
-      const timer = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
-      }, 6000); 
-      // Added currentIndex to the dependency array below. 
-      // This resets the 6-second countdown whenever the user manually clicks "Next"!
-      return () => clearInterval(timer);
-    }
-  }, [slides.length, currentIndex]); 
-
-  // Scroll-to-shrink animation (Zero-scroll effect)
+  // 1. SCROLL ANIMATION
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
+      const fastScrollLimit = 300; 
+      let progress = Math.min(scrollY / fastScrollLimit, 1);
 
-      const minScale = 0.8; 
-      const maxRadius = 40; 
-
-      let progress = scrollY / windowHeight;
-      if (progress > 1) progress = 1;
-      if (progress < 0) progress = 0;
-
-      const currentScale = 1 - ((1 - minScale) * progress);
-      const currentRadius = maxRadius * progress;
-
-      setScale(currentScale);
-      setBorderRadius(currentRadius);
+      setScale(1 - (0.15 * progress));
+      setBorderRadius(48 * progress);
+      setContentOpacity(Math.max(1 - (progress * 2), 0));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 2. AUTO-PLAY
+  useEffect(() => {
+    if (isDragging) return; 
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isDragging, slides.length]);
+
+  // 3. UNIFIED DRAG LOGIC (Works for both Mouse & Touch)
+  const handleDragStart = (clientX) => {
+    setHasInteracted(true); // Hide the "Swipe >>>" word
+    setIsDragging(true);
+    setDragStart(clientX);
+  };
+
+  const handleDragMove = (clientX) => {
+    if (!isDragging) return;
+    const distance = clientX - dragStart;
+    setDragOffset(distance);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    if (!dragStart) return;
+
+    const swipeThreshold = 75; // px distance to trigger slide change
+
+    if (dragOffset > swipeThreshold) {
+      setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    } else if (dragOffset < -swipeThreshold) {
+      setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }
+    
+    setDragOffset(0);
+    setDragStart(null);
+  };
+
   return (
-    <section className="relative h-[150vh] w-full bg-zinc-50">
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+    <section className="relative h-[95vh] md:h-[110vh] w-full bg-[#050614] select-none">
+      <div className="sticky top-0 h-[95vh] md:h-screen w-full flex items-center justify-center overflow-hidden">
         
-        {/* The Animated Window */}
         <div 
-          className="relative w-full h-full overflow-hidden shadow-2xl origin-center bg-black"
+          className={`relative w-full h-full overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.6)] origin-center bg-black ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           style={{ 
             transform: `scale(${scale})`,
             borderRadius: `${borderRadius}px`,
             transition: 'transform 0.1s ease-out, border-radius 0.1s ease-out' 
           }}
+          // Mobile Touch Events
+          onTouchStart={(e) => handleDragStart(e.targetTouches[0].clientX)}
+          onTouchMove={(e) => handleDragMove(e.targetTouches[0].clientX)}
+          onTouchEnd={handleDragEnd}
+          // Desktop Mouse Events
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseMove={(e) => handleDragMove(e.clientX)}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd} // Stops drag if cursor leaves the box
         >
-          
-          {/* Mapping through Slides */}
-          {slides.map((slide, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out
-                ${index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}
-              `}
-            >
-              
-              {/* Conditional Media Rendering */}
-              {slide.type === 'video' ? (
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover z-0"
-                >
-                  <source src={slide.src} type="video/mp4" />
-                </video>
-              ) : (
-                <img 
-                  src={slide.src} 
-                  alt={slide.title} 
-                  className="absolute inset-0 w-full h-full object-cover z-0"
-                />
-              )}
+          {/* THE SLIDING TRACK */}
+          <div 
+            className={`flex h-full w-full ${isDragging ? '' : 'transition-transform duration-700 ease-[cubic-bezier(0.45,0,0.55,1)]'}`}
+            style={{ 
+              transform: `translateX(calc(-${currentIndex * 100}% + ${dragOffset}px))` 
+            }}
+          >
+            {slides.map((slide, index) => {
+              const isActive = index === currentIndex;
+              const slideScale = isActive ? 1 : 0.85; 
+              const slideOpacity = isActive ? 1 : 0.5;
 
-              {/* Dark Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-black/40 z-10"></div>
+              return (
+                <div key={index} className="relative w-full h-full flex-shrink-0 overflow-hidden bg-black pointer-events-none">
+                  <div 
+                    className="absolute inset-0 w-full h-full transition-all duration-700 ease-[cubic-bezier(0.45,0,0.55,1)]"
+                    style={{ transform: `scale(${slideScale})`, opacity: slideOpacity }}
+                  >
+                    {slide.type === 'video' ? (
+                      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
+                        <source src={slide.src} type="video/mp4" />
+                      </video>
+                    ) : (
+                      // Added draggable="false" to prevent desktop ghost-image dragging
+                      <img src={slide.src} alt="" draggable="false" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050614] via-[#050614]/40 to-transparent z-10" />
+                  </div>
 
-              {/* Specific Text for this Slide */}
-              <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4 sm:px-6 lg:px-8">
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tighter mb-6 drop-shadow-md">
-                  {slide.title}
-                </h1>
-                
-                <p className="max-w-2xl mx-auto text-lg md:text-2xl text-gray-200 mb-10 font-light drop-shadow-md">
-                  {slide.subtitle}
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="px-8 py-4 bg-white text-black text-sm md:text-base font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300 pointer-events-auto">
-                    {slide.buttonText}
-                  </button>
+                  <div 
+                    className={`relative z-20 flex flex-col items-center justify-center h-full text-center px-6 transition-all duration-500 delay-100 ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`} 
+                    style={{ opacity: contentOpacity }}
+                  >
+                    <h1 className="text-4xl md:text-8xl font-bold tracking-tighter text-white mb-6 max-w-[90%] break-words leading-none">
+                      {slide.title}
+                    </h1>
+                    {/* Re-enable pointer events just for the button so it can be clicked */}
+                    <button className="px-8 py-4 rounded-xl bg-white text-black font-bold flex items-center gap-2 active:scale-95 transition-transform hover:bg-gray-200 pointer-events-auto">
+                      {slide.buttonText} <ArrowRight size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Navigation Dots (Bottom center) */}
-          <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 flex gap-3">
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`transition-all duration-300 rounded-full 
-                  ${index === currentIndex 
-                    ? 'w-8 h-1.5 bg-white' 
-                    : 'w-2 h-1.5 bg-white/50 hover:bg-white/80' 
-                  }
-                `}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
+              );
+            })}
           </div>
 
-          {/* NEW: Next Slide Button (Bottom Right) */}
-          <button 
-            onClick={() => setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length)}
-            className="absolute bottom-10 right-6 md:right-12 z-30 flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all duration-300 pointer-events-auto"
-            aria-label="Next Slide"
-          >
-            <svg className="w-5 h-5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </button>
-          
+          {/* INDICATORS */}
+          <div className="absolute bottom-10 left-0 w-full z-30 flex flex-col items-center gap-6 pointer-events-none">
+            
+            <div 
+              className={`flex items-center gap-3 text-white/40 animate-pulse text-[10px] font-bold tracking-[0.3em] uppercase transition-opacity duration-500 ${hasInteracted ? 'opacity-0' : 'opacity-100'}`}
+            >
+               Swipe <span className="text-white">{'>>>'}</span>
+            </div>
+            
+            <div className="flex gap-2">
+              {slides.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-1 transition-all duration-500 rounded-full ${currentIndex === i ? 'w-10 bg-white' : 'w-2 bg-white/20'}`} 
+                />
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

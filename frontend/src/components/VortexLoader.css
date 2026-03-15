@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap');
+
+.vortex-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #02040a; 
+  font-family: 'Rajdhani', sans-serif; 
+  overflow: hidden;
+  position: fixed; /* Lock it to the screen */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  /* Add a little padding so it never touches the absolute edge of a small screen */
+  padding: 2rem; 
+  box-sizing: border-box;
+}
+
+/* --- THE PARTICLE VORTEX --- */
+.particle-wrapper {
+  position: relative;
+  /* FLUID SIZING UPDATED: Max width reduced from 450px to 320px. 
+     Preferred width reduced from 70vw to 40vw. */
+  width: clamp(200px, 40vw, 320px);
+  aspect-ratio: 1 / 1; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(1rem, 4vw, 2rem); 
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 60%);
+}
+
+.vortex-core {
+  position: absolute;
+  /* FLUID CORE UPDATED: Scaled down to match the new wrapper max size */
+  width: clamp(20px, 5vw, 35px);
+  aspect-ratio: 1 / 1;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 
+    0 0 30px 10px #00ffff, 
+    0 0 60px 20px #b829ff, 
+    inset 0 0 20px #ffffff;
+  animation: core-pulse 2s ease-in-out infinite alternate;
+  z-index: 10; 
+}
+
+/* --- THE UI OVERLAY --- */
+.ui-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* UI WIDTH UPDATED: Capped at 280px so the bar doesn't stretch too wide */
+  width: clamp(200px, 45vw, 280px);
+  z-index: 20;
+}
+
+.glitch-text {
+  color: #00ffff;
+  /* FONT SIZE UPDATED: Capped at 2.5rem instead of 3.5rem */
+  font-size: clamp(1.8rem, 6vw, 2.5rem); 
+  letter-spacing: clamp(0.2rem, 1vw, 0.4rem);
+  margin: 0 0 1rem 0;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+  position: relative;
+  text-align: center;
+}
+.particle-spinner {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: galaxy-spin 10s linear infinite; 
+}
+
+.particles-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+
+
+
+.progress-bar-wrapper {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 255, 255, 0.1);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #b829ff, #00ffff, #ffffff);
+  box-shadow: 0 0 10px #00ffff;
+  transition: width 0.1s linear;
+}
+
+.progress-numbers {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0.8rem;
+  color: #00ffff;
+}
+
+.percentage {
+  /* Fluid font sizing for the numbers */
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  font-weight: 700;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+.status {
+  font-size: clamp(0.7rem, 3vw, 0.9rem);
+  letter-spacing: 0.1rem;
+  opacity: 0.7;
+}
+
+/* --- KEYFRAMES --- */
+@keyframes galaxy-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.05); } 
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes core-pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 clamp(20px, 5vw, 40px) clamp(10px, 3vw, 15px) #00ffff, 0 0 clamp(40px, 10vw, 80px) clamp(15px, 4vw, 30px) #b829ff; }
+}
